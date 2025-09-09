@@ -1,0 +1,30 @@
+name: Q Code Transformation
+
+on:
+  push:
+    branches:
+      - 'Q-TRANSFORM-issue-*'
+
+jobs:
+  q-code-transformation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+          
+      - name: Find project root and build
+        run: |
+          PROJECT_DIR=$(find . -name "pom.xml" -exec dirname {} \; | head -n 1)
+          echo "Using project directory: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
+          mvn ${{ env.MAVEN_CLI_OPTS }} verify
+          mvn ${{ env.MAVEN_CLI_OPTS }} dependency:copy-dependencies             -DoutputDirectory=dependencies             -Dmdep.useRepositoryLayout=true             -Dmdep.copyPom=true             -Dmdep.addParentPoms=true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: q-code-transformation-dependencies
+          path: dependencies
